@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIOTERRA – Viabilidade Fiscal ES</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #1a2332; }
+
+.header {
+  background: linear-gradient(120deg, #0f2744 0%, #1e4fa3 100%);
+  color: #fff; padding: 24px 40px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.header h1 { font-size: 20px; font-weight: 700; }
+.header p  { font-size: 12px; opacity: .7; margin-top: 3px; }
+.hbadge { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+/* INPUTS */
+.inputs { background: white; border-bottom: 2px solid #dde3ed; padding: 20px 40px; }
+.inputs-title { font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .7px; color: #8896a5; margin-bottom: 16px; }
+.inputs-grid { display: grid; grid-template-columns: repeat(8,1fr); gap: 16px; align-items: start; }
+
+.field label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: #5a6a7a; margin-bottom: 6px; }
+.field input[type=text], .field input[type=number] {
+  width: 100%; padding: 9px 11px; border: 1.5px solid #dde3ed; border-radius: 8px;
+  font-size: 14px; font-weight: 700; color: #1a2332; outline: none; background: #fafbfc; transition: border .15s;
+}
+.field input:focus { border-color: #1e4fa3; background: white; }
+.field .hint { font-size: 10px; color: #a0aec0; margin-top: 4px; }
+
+.sfield label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: #5a6a7a; margin-bottom: 8px; }
+.srow { display: flex; align-items: center; gap: 8px; }
+.srow input[type=range] { flex: 1; accent-color: #1e4fa3; cursor: pointer; }
+.srow .sv { font-size: 14px; font-weight: 700; color: #1a2332; min-width: 40px; text-align: right; }
+.shint { font-size: 10px; color: #a0aec0; margin-top: 4px; }
+
+/* BODY */
+.body { max-width: 1200px; margin: 0 auto; padding: 28px 40px; }
+
+/* ── COMPARATIVOS COM X SEPARADOR ── */
+.cmp-wrap {
+  display: grid;
+  grid-template-columns: 1fr 72px 1fr;
+  gap: 0;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+
+.x-sep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0 4px;
+}
+.x-line-v {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent 0%, #dde3ed 20%, #dde3ed 80%, transparent 100%);
+  transform: translateX(-50%);
+}
+.x-badge {
+  background: #1a2332;
+  color: white;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,.25);
+  position: relative;
+  z-index: 1;
+}
+
+.cmp-card { background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07); border: 1px solid #dde3ed; }
+.cmp-head { padding: 15px 22px; color: white; }
+.cmp-head.orange { background: linear-gradient(120deg,#b45309,#d97706); }
+.cmp-head.red    { background: linear-gradient(120deg,#991b1b,#dc2626); }
+.cmp-head h2 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.cmp-head p  { font-size: 11px; opacity: .85; }
+
+.cmp-table { width: 100%; border-collapse: collapse; }
+.cmp-table th { padding: 9px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: #8896a5; background: #f8fafc; border-bottom: 1px solid #edf1f7; text-align: right; }
+.cmp-table th:first-child { text-align: left; }
+.cmp-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+.cmp-table .xsep-col { width: 32px; padding: 0; text-align: center; background: transparent; }
+.cmp-table .xsep-col .xbig {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #1a2332; color: white;
+  font-size: 14px; font-weight: 900; line-height: 1;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+}
+.cmp-table tr:last-child td { border-bottom: none; }
+.cmp-table .r { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cmp-table .lbl { color: #5a6a7a; font-size: 12px; }
+.cmp-table .sep td { background: #f1f5f9; padding: 2px 0; }
+.cmp-table .bold td { font-weight: 700; background: #fafbfc; }
+
+.cv-red   { color: #dc2626; }
+.cv-green { color: #16a34a; }
+.cv-blue  { color: #1e4fa3; }
+.cv-gray  { color: #94a3b8; font-style: italic; }
+
+.cmp-result { display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 18px; border-top: 2px solid #e2e8f0; }
+.cmp-result.pos { background: #f0fdf4; }
+.cmp-result.neg { background: #fef2f2; }
+.cmp-result .rlbl { font-size: 13px; font-weight: 700; color: #374151; }
+.cmp-result .rsub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+.cmp-result .rval { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pos .rval { color: #16a34a; }
+.neg .rval { color: #dc2626; }
+
+/* BOTTOM */
+.bottom { display: grid; grid-template-columns: 1fr 1.8fr; gap: 20px; margin-bottom: 24px; }
+.card { background: white; border-radius: 14px; padding: 22px 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07); border: 1px solid #dde3ed; }
+.card-title { font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .7px; color: #8896a5; margin-bottom: 16px; }
+.chart-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.pill { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 10px; }
+.pill.g { background: #f0fdf4; color: #16a34a; }
+.pill.r { background: #fef2f2; color: #dc2626; }
+
+/* Custos detalhados */
+.cost-section-title {
+  font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px;
+  color: #94a3b8; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #f1f5f9;
+}
+.cost-row { display: flex; justify-content: space-between; align-items: baseline;
+  padding: 7px 0; border-bottom: 1px solid #f8fafc; font-size: 13px; }
+.cost-row:last-of-type { border-bottom: none; }
+.cost-row .cl { color: #5a6a7a; line-height: 1.3; }
+.cost-row .cl small { display: block; font-size: 10px; color: #a0aec0; margin-top: 1px; }
+.cost-row .cv { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: 8px; }
+.cost-total { display: flex; justify-content: space-between; align-items: center;
+  padding: 11px 0 0; margin-top: 6px; border-top: 2px solid #e2e8f0; }
+.cost-total .cl { font-size: 14px; font-weight: 700; }
+.cost-total .cv { font-size: 20px; font-weight: 800; color: #d97706; font-variant-numeric: tabular-nums; }
+
+.nota { border-left: 3px solid #f59e0b; background: #fffbeb;
+  padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 11px;
+  color: #78350f; line-height: 1.6; margin-top: 12px; }
+.nota.blue { border-color: #3b82f6; background: #eff6ff; color: #1e3a5f; }
+.nota strong { font-weight: 700; }
+
+/* REFORMA TRIBUTÁRIA */
+.reforma-card { background: white; border-radius: 14px; padding: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07); border: 1px solid #dde3ed; margin-bottom: 24px; }
+.reforma-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.reforma-hdr-left h2 { font-size: 15px; font-weight: 700; color: #1a2332; }
+.reforma-hdr-left p  { font-size: 12px; color: #64748b; margin-top: 3px; }
+.reforma-legend { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+.reforma-legend span { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
+.anual-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(80px,1fr)); gap: 8px; margin-bottom: 20px; }
+.ano-pill { border-radius: 8px; padding: 8px 6px; text-align: center; border: 1.5px solid transparent; }
+.ano-pill .apano { font-size: 11px; font-weight: 700; color: #5a6a7a; margin-bottom: 4px; }
+.ano-pill .apval { font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ano-pill .apinc { font-size: 10px; margin-top: 2px; color: #94a3b8; }
+
+.footer { text-align: center; padding: 20px; font-size: 11px; color: #a0aec0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>BIOTERRA — Viabilidade Fiscal Espírito Santo</h1>
+    <p>Simulador de comparação tributária SP × ES + Impacto Reforma Tributária</p>
+  </div>
+  <div class="hbadge">Base: Jun / 2026</div>
+</div>
+
+<!-- INPUTS -->
+<div class="inputs">
+  <div class="inputs-title">Parâmetros da Simulação</div>
+  <div class="inputs-grid">
+
+    <div class="field">
+      <label>BC Entradas (R$)</label>
+      <input type="text" id="i-bce" value="852.201" oninput="recalc('bce')">
+      <div class="hint">Base ICMS compras (12% interestadual)</div>
+    </div>
+
+    <div class="sfield">
+      <label>Markup sobre Custo</label>
+      <div class="srow">
+        <input type="range" id="sl-mk" min="10" max="500" step="5" value="200" oninput="recalc('markup')">
+        <span class="sv" id="d-mk">200%</span>
+      </div>
+      <div class="shint">BC Saídas = BC Entradas × (1 + markup)</div>
+    </div>
+
+    <div class="field">
+      <label>BC Saídas (R$)</label>
+      <input type="text" id="i-bcs" value="2.556.604" oninput="recalc('bcs')">
+      <div class="hint">Editável — recalcula BC Entradas</div>
+    </div>
+
+    <div class="sfield">
+      <label>% Shampoo / Demais</label>
+      <div class="srow">
+        <input type="range" id="sl-sh" min="0" max="100" step="1" value="19" oninput="recalc()">
+        <span class="sv" id="d-sh">19%</span>
+      </div>
+      <div class="shint">Demais: <span id="d-dem">81%</span> · impacta Fim Primavera</div>
+    </div>
+
+    <div class="field">
+      <label>Δ Logística ES − SP (%)</label>
+      <input type="number" id="i-log" value="0" step="0.1" oninput="recalc()">
+      <div class="hint">Diferença em relação ao custo atual SP</div>
+    </div>
+
+    <div class="field">
+      <label>Δ Frete ES − SP (%)</label>
+      <input type="number" id="i-fr" value="0" step="0.1" oninput="recalc()">
+      <div class="hint">Diferença em relação ao custo atual SP</div>
+    </div>
+
+    <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+      <div style="background:#eef4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#1e4fa3;line-height:1.5">
+        <strong id="d-econ-prim">—</strong><br>
+        <span style="font-size:10px;color:#5a6a7a">Base cálculo consultoria (ICMS SP − ICMS ES)</span>
+      </div>
+    </div>
+
+    <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+      <div style="background:#f5f3ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#7c3aed;line-height:1.5">
+        <strong id="d-cons-top">—</strong><br>
+        <span style="font-size:10px;color:#5a6a7a">Consultoria (6% · mín. R$ 3.500)</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="body">
+
+  <!-- COMPARATIVOS COM X -->
+  <div class="cmp-wrap">
+
+    <!-- CARD 1: PRIMAVERA vs ES -->
+    <div class="cmp-card">
+      <div class="cmp-head orange">
+        <h2>Primavera Tributária vs Espírito Santo</h2>
+        <p>SP compra 12% e vende 12% &nbsp;·&nbsp; Vigência até 31/12/2026</p>
+      </div>
+      <table class="cmp-table">
+        <thead>
+          <tr><th>Item</th><th>SP — Primavera</th><th class="xsep-col"></th><th>Espírito Santo</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lbl">Débito ICMS (12% × BC Saídas)</td>
+            <td class="r cv-red"  id="p1-deb">—</td>
+            <td class="xsep-col" rowspan="4"><div class="xbig">×</div></td>
+            <td class="r cv-blue" id="e1-deb">—</td>
+          </tr>
+          <tr>
+            <td class="lbl">Crédito ICMS (12% × BC Entradas)</td>
+            <td class="r cv-green" id="p1-cred">—</td>
+            <td class="r cv-gray">Estornado</td>
+          </tr>
+          <tr class="sep"><td colspan="2"></td><td></td></tr>
+          <tr class="bold">
+            <td>ICMS a Pagar</td>
+            <td class="r cv-red"  id="p1-pagar">—</td>
+            <td class="r cv-blue" id="e1-pagar">—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="cmp-result pos" id="res1-box">
+        <div><div class="rlbl">Economia Líquida / Mês</div>
+             <div class="rsub">ICMS SP − Total Custos ES</div></div>
+        <div class="rval" id="res1-val">—</div>
+      </div>
+    </div>
+
+    <!-- SEPARADOR X -->
+    <div class="x-sep">
+      <div class="x-line-v"></div>
+      <div class="x-badge">×</div>
+    </div>
+
+    <!-- CARD 2: FIM PRIMAVERA vs ES -->
+    <div class="cmp-card">
+      <div class="cmp-head red">
+        <h2>Fim da Primavera vs Espírito Santo</h2>
+        <p>SP compra 12% · vende 18% shampoo / 25% demais &nbsp;·&nbsp; A partir de 2027</p>
+      </div>
+      <table class="cmp-table">
+        <thead>
+          <tr><th>Item</th><th>SP — Fim Primavera</th><th class="xsep-col"></th><th>Espírito Santo</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="lbl" id="p2-deb-lbl">Débito ICMS</td>
+            <td class="r cv-red"  id="p2-deb">—</td>
+            <td class="xsep-col" rowspan="4"><div class="xbig">×</div></td>
+            <td class="r cv-blue" id="e2-deb">—</td>
+          </tr>
+          <tr>
+            <td class="lbl">Crédito ICMS (12% × BC Entradas)</td>
+            <td class="r cv-green" id="p2-cred">—</td>
+            <td class="r cv-gray">Estornado</td>
+          </tr>
+          <tr class="sep"><td colspan="2"></td><td></td></tr>
+          <tr class="bold">
+            <td>ICMS a Pagar</td>
+            <td class="r cv-red"  id="p2-pagar">—</td>
+            <td class="r cv-blue" id="e2-pagar">—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="cmp-result pos" id="res2-box">
+        <div><div class="rlbl">Economia Líquida / Mês</div>
+             <div class="rsub">ICMS SP − Total Custos ES</div></div>
+        <div class="rval" id="res2-val">—</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CUSTOS + GRÁFICO 24 MESES -->
+  <div class="bottom">
+
+    <div class="card">
+      <div class="card-title">Custos Operacionais — Espírito Santo / mês</div>
+
+      <!-- ICMS SP: ponto de partida -->
+      <div style="display:flex;justify-content:space-between;align-items:center;
+                  background:#fef2f2;border-radius:8px;padding:10px 14px;margin-bottom:14px">
+        <span style="font-size:13px;font-weight:700;color:#374151">ICMS SP a pagar hoje (Primavera)</span>
+        <span style="font-size:16px;font-weight:800;color:#dc2626;font-variant-numeric:tabular-nums" id="c-sp1">—</span>
+      </div>
+
+      <div class="cost-section-title">Custos da Operação ES</div>
+      <div class="cost-row">
+        <span class="cl">ICMS ES
+          <small>1,14% × BC Saídas · crédito estornado</small>
+        </span>
+        <span class="cv cv-blue" id="c-icms">—</span>
+      </div>
+      <div class="cost-row">
+        <span class="cl">Consultoria fiscal
+          <small>mín. R$ 3.500</small>
+        </span>
+        <span style="display:flex;align-items:center;gap:8px;margin-left:8px">
+          <span style="font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;padding:2px 7px;border-radius:6px">6%</span>
+          <span class="cv" style="color:#7c3aed" id="c-cons">—</span>
+        </span>
+      </div>
+      <div class="cost-row">
+        <span class="cl">Δ Logística
+          <small>vs. SP atual</small>
+        </span>
+        <span style="display:flex;align-items:center;gap:8px;margin-left:8px">
+          <span style="font-size:11px;font-weight:700;color:#d97706;background:#fff7ed;padding:2px 7px;border-radius:6px" id="c-log-p">0,0%</span>
+          <span class="cv" id="c-log" style="color:#d97706">—</span>
+        </span>
+      </div>
+      <div class="cost-row">
+        <span class="cl">Δ Frete
+          <small>vs. SP atual</small>
+        </span>
+        <span style="display:flex;align-items:center;gap:8px;margin-left:8px">
+          <span style="font-size:11px;font-weight:700;color:#d97706;background:#fff7ed;padding:2px 7px;border-radius:6px" id="c-fr-p">0,0%</span>
+          <span class="cv" id="c-fr" style="color:#d97706">—</span>
+        </span>
+      </div>
+
+      <div class="cost-total">
+        <span class="cl">Total Custos ES / mês</span>
+        <span class="cv" id="c-tot">—</span>
+      </div>
+
+      <!-- Linha de resultado explícita -->
+      <div style="display:flex;justify-content:space-between;align-items:center;
+                  margin-top:10px;padding:10px 14px;border-radius:8px;background:#f0fdf4" id="c-dif-box">
+        <span style="font-size:12px;font-weight:700;color:#374151">
+          ICMS SP − Total Custos ES
+        </span>
+        <span style="font-size:18px;font-weight:800;font-variant-numeric:tabular-nums" id="c-liq1">—</span>
+      </div>
+
+      <div class="nota blue" style="margin-top:14px">
+        <strong>Como usar os campos Δ Logística e Δ Frete:</strong><br>
+        Insira a <strong>diferença</strong> entre o custo da operação ES e o custo atual em SP.
+        Exemplo: se hoje você paga 2% de logística em SP e na operação ES pagará 1,8%, insira
+        <strong>−0,2%</strong> (economia). Se o frete ES for mais caro, insira valor positivo (custo extra).
+        Isso garante que apenas o impacto incremental seja considerado na simulação.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chart-hdr">
+        <div class="card-title" style="margin:0">Projeção Economia Líquida — 24 Meses</div>
+        <span class="pill g" id="pill-24m">Total: —</span>
+      </div>
+      <canvas id="chart-24m" height="210"></canvas>
+      <div class="nota" style="margin-top:12px">
+        Meses 1–7 (Jun–Dez/2026): Primavera Tributária &nbsp;·&nbsp; Meses 8–24 (Jan/2027+): Fim da Primavera
+      </div>
+    </div>
+
+  </div>
+
+  <!-- REFORMA TRIBUTÁRIA -->
+  <div class="reforma-card">
+    <div class="reforma-hdr">
+      <div class="reforma-hdr-left">
+        <h2>Impacto da Reforma Tributária — Projeção até 2032</h2>
+        <p>Redução de 10% ao ano do incentivo ES a partir de 2029 · Incentivos encerram em 2032 · Valores em <strong>ganho líquido</strong> (já descontados ICMS ES, consultoria, Δ logística e Δ frete)</p>
+      </div>
+      <div class="reforma-legend">
+        <span style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0">Incentivo pleno (100%)</span>
+        <span style="background:#fef9c3;color:#92400e;border:1px solid #fde68a">Redução em curso</span>
+        <span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca">Incentivo encerrado</span>
+      </div>
+    </div>
+
+    <div class="anual-grid" id="anual-grid"></div>
+
+    <!-- Total acumulado -->
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                background:#f0fdf4;border-radius:10px;padding:14px 20px;margin-bottom:20px;border:1.5px solid #bbf7d0">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#374151">Economia Total Acumulada (Jun/2026 → Dez/2032)</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">Soma do ganho líquido anual de todos os anos</div>
+      </div>
+      <div style="font-size:26px;font-weight:900;color:#16a34a;font-variant-numeric:tabular-nums" id="reforma-total">—</div>
+    </div>
+
+    <canvas id="chart-reforma" height="100"></canvas>
+    <div class="nota" style="margin-top:14px">
+      <strong>Como funciona:</strong>
+      Os valores exibidos são o <strong>ganho líquido anual</strong> — já descontados todos os custos
+      da operação ES (ICMS, consultoria, Δ logística e Δ frete). O incentivo ES se mantém integral
+      até 2028. A partir de 2029, perde <strong>10% ao ano</strong>
+      (2029: 90% → 2030: 80% → 2031: 70%). Em <strong>2032 os incentivos são extintos</strong>,
+      zerando completamente o ganho ES. A partir de 2032, a operação ES passaria a ter custo
+      tributário equivalente ou superior à operação SP.
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  BIOTERRA — Estudo de Viabilidade Fiscal ES &nbsp;·&nbsp; Base: Jun/2026 &nbsp;·&nbsp; Sujeito a validação contábil
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  BC Saídas  = BC Entradas × (1 + markup/100)  [ou manual]
+//  SP Prim    = 12% × BCS − 12% × BCE
+//  SP Fim     = (sh×18% + dem×25%) × BCS − 12% × BCE
+//  ES         = 1,14% × BCS  (sem crédito)
+//  Consultoria= max(3500, 6% × econBruta)   [econBruta = SP Prim − ES]
+//  Total ES   = ES + Logística + Frete + Consultoria
+//  Liq        = ICMS SP − Total ES
+// ═══════════════════════════════════════════════════════
+
+let charts = {};
+let _bcsManual = false;
+
+function parseBRL(s) {
+  return parseFloat(String(s).replace(/\./g,'').replace(',','.')) || 0;
+}
+function fmtBRL(v) {
+  return 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtBRLsigned(v) {
+  return (v < 0 ? '− ' : '') + 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function fmtBRLraw(v) {
+  return Math.round(v).toLocaleString('pt-BR');
+}
+function s(id, val) { document.getElementById(id).textContent = val; }
+function pct(v)     { return Math.round(v*100) + '%'; }
+function pctStr(v)  { return (v*100).toFixed(1).replace('.',',') + '%'; }
+
+function setRes(boxId, valId, liq) {
+  const box = document.getElementById(boxId);
+  const el  = document.getElementById(valId);
+  el.textContent = fmtBRLsigned(liq);
+  box.className  = 'cmp-result ' + (liq >= 0 ? 'pos' : 'neg');
+  el.style.color = liq >= 0 ? '#16a34a' : '#dc2626';
+}
+
+function recalc(trigger) {
+  let bce      = parseBRL(document.getElementById('i-bce').value);
+  const markup = +document.getElementById('sl-mk').value / 100;
+  const sh     = +document.getElementById('sl-sh').value / 100;
+  const dem    = 1 - sh;
+  const logR   = parseFloat(document.getElementById('i-log').value) / 100 || 0;
+  const frR    = parseFloat(document.getElementById('i-fr').value)  / 100 || 0;
+
+  // BC Saídas bidireccional
+  let bcs;
+  if (trigger === 'bcs') {
+    _bcsManual = true;
+    bcs = parseBRL(document.getElementById('i-bcs').value);
+    if (markup > 0) {
+      const bceCalc = bcs / (1 + markup);
+      document.getElementById('i-bce').value = fmtBRLraw(bceCalc);
+      bce = bceCalc;
+    }
+  } else if (trigger === 'markup') {
+    if (_bcsManual) {
+      bcs = parseBRL(document.getElementById('i-bcs').value);
+      const bceCalc = bcs / (1 + markup);
+      document.getElementById('i-bce').value = fmtBRLraw(bceCalc);
+      bce = bceCalc;
+    } else {
+      bcs = bce * (1 + markup);
+      document.getElementById('i-bcs').value = fmtBRLraw(bcs);
+    }
+  } else if (trigger === 'bce' || !_bcsManual) {
+    _bcsManual = false;
+    bcs = bce * (1 + markup);
+    document.getElementById('i-bcs').value = fmtBRLraw(bcs);
+  } else {
+    bcs = parseBRL(document.getElementById('i-bcs').value);
+  }
+
+  document.getElementById('d-mk').textContent  = Math.round(markup*100) + '%';
+  document.getElementById('d-sh').textContent  = Math.round(sh*100) + '%';
+  document.getElementById('d-dem').textContent = Math.round(dem*100) + '%';
+  document.getElementById('c-log-p').textContent = pctStr(logR);
+  document.getElementById('c-fr-p').textContent  = pctStr(frR);
+
+  // ── ICMS ─────────────────────────────────────────────
+  const sp1Deb   = bcs * 0.12;
+  const sp1Cred  = bce * 0.12;
+  const sp1Pagar = sp1Deb - sp1Cred;
+
+  const sp2Deb   = bcs * (sh * 0.18 + dem * 0.25);
+  const sp2Cred  = bce * 0.12;
+  const sp2Pagar = sp2Deb - sp2Cred;
+
+  const esICMS = bcs * 0.0114;
+
+  // ── CUSTOS ES ─────────────────────────────────────────
+  const cusLog  = bcs * logR;
+  const cusFr   = bcs * frR;
+  const econBrt = sp1Pagar - esICMS;          // economia tributária bruta (base consultoria)
+  const consult = Math.max(3500, econBrt * 0.06);
+  const totalES = esICMS + cusLog + cusFr + consult;
+
+  const liq1 = sp1Pagar - totalES;
+  const liq2 = sp2Pagar - totalES;
+
+  // ── PREENCHE ──────────────────────────────────────────
+  s('p1-deb',   fmtBRL(sp1Deb));
+  s('p1-cred',  fmtBRL(sp1Cred));
+  s('p1-pagar', fmtBRL(sp1Pagar));
+  s('e1-deb',   fmtBRL(esICMS));
+  s('e1-pagar', fmtBRL(esICMS));
+  setRes('res1-box','res1-val', liq1);
+
+  document.getElementById('p2-deb-lbl').textContent =
+    `Débito ICMS (${pct(sh)}×18% + ${pct(dem)}×25%)`;
+  s('p2-deb',   fmtBRL(sp2Deb));
+  s('p2-cred',  fmtBRL(sp2Cred));
+  s('p2-pagar', fmtBRL(sp2Pagar));
+  s('e2-deb',   fmtBRL(esICMS));
+  s('e2-pagar', fmtBRL(esICMS));
+  setRes('res2-box','res2-val', liq2);
+
+  s('c-sp1',  fmtBRL(sp1Pagar));
+  s('c-icms', fmtBRL(esICMS));
+  s('c-cons', fmtBRL(consult));
+  // Delta: valor pode ser negativo (economia) ou positivo (custo extra)
+  const elLog = document.getElementById('c-log');
+  elLog.textContent = (cusLog < 0 ? '− ' : '') + fmtBRL(cusLog);
+  elLog.style.color = cusLog <= 0 ? '#16a34a' : '#d97706';
+  const elFr = document.getElementById('c-fr');
+  elFr.textContent = (cusFr < 0 ? '− ' : '') + fmtBRL(cusFr);
+  elFr.style.color = cusFr <= 0 ? '#16a34a' : '#d97706';
+  s('c-tot',  fmtBRL(totalES));
+  const elLiq1 = document.getElementById('c-liq1');
+  elLiq1.textContent = fmtBRLsigned(liq1);
+  elLiq1.style.color = liq1 >= 0 ? '#16a34a' : '#dc2626';
+  document.getElementById('c-dif-box').style.background = liq1 >= 0 ? '#f0fdf4' : '#fef2f2';
+
+  document.getElementById('d-econ-prim').textContent = fmtBRL(econBrt) + '/mês';
+  document.getElementById('d-cons-top').textContent  = fmtBRL(consult) + '/mês';
+
+  update24m(sp1Pagar, sp2Pagar, totalES);
+  updateReforma(sp1Pagar, sp2Pagar, totalES);
+}
+
+// ── GRÁFICO 24 MESES ───────────────────────────────────
+function update24m(sp1, sp2, totalES) {
+  const labels=[], d1=[], d2=[], dmix=[];
+  const mn=['Jun','Jul','Ago','Set','Out','Nov','Dez','Jan','Fev','Mar','Abr','Mai',
+            'Jun','Jul','Ago','Set','Out','Nov','Dez','Jan','Fev','Mar','Abr','Mai'];
+  const an=[26,26,26,26,26,26,26,27,27,27,27,27,27,27,27,27,27,27,27,28,28,28,28,28];
+  let total = 0;
+  for (let i=0;i<24;i++) {
+    labels.push(mn[i]+'/'+an[i]);
+    const v1=sp1-totalES, v2=sp2-totalES, vm=i<7?v1:v2;
+    d1.push(v1); d2.push(v2); dmix.push(vm); total+=vm;
+  }
+  document.getElementById('pill-24m').textContent = 'Total 24m: ' + fmtBRL(total);
+  document.getElementById('pill-24m').className   = 'pill ' + (total>=0?'g':'r');
+
+  const ds = [
+    { label:'Primavera',    data:d1,   borderColor:'#d97706', borderDash:[4,3], borderWidth:1.5, pointRadius:0, tension:.3, backgroundColor:'transparent' },
+    { label:'Fim Primavera',data:d2,   borderColor:'#dc2626', borderDash:[4,3], borderWidth:1.5, pointRadius:0, tension:.3, backgroundColor:'transparent' },
+    { label:'Projeção Mista',data:dmix,borderColor:'#16a34a', borderWidth:2.5,  pointRadius:3,   tension:.3, backgroundColor:'rgba(22,163,74,.1)', fill:true },
+  ];
+  if (charts.m24) {
+    charts.m24.data.labels=labels;
+    ds.forEach((d,i)=>charts.m24.data.datasets[i].data=d.data);
+    charts.m24.update('none'); return;
+  }
+  charts.m24 = new Chart(document.getElementById('chart-24m').getContext('2d'), {
+    type:'line', data:{labels,datasets:ds},
+    options:{
+      responsive:true, interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11},boxWidth:12,padding:12}},
+        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmtBRL(c.raw)}}
+      },
+      scales:{
+        y:{ticks:{callback:v=>'R$'+(v/1000).toFixed(0)+'k',font:{size:10}},grid:{color:'#f1f5f9'}},
+        x:{ticks:{font:{size:10},maxRotation:45},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ── REFORMA TRIBUTÁRIA — FIXO 10%/ANO, ENCERRA 2032 ───
+function updateReforma(sp1, sp2, totalES) {
+  // Fator de incentivo fixo:
+  // 2026–2028: 100%
+  // 2029: 90%, 2030: 80%, 2031: 70%
+  // 2032+: 0% (extinção do incentivo)
+  const fatores = {
+    2026: 1.00, 2027: 1.00, 2028: 1.00,
+    2029: 0.90, 2030: 0.80, 2031: 0.70,
+    2032: 0.00
+  };
+  const anos = [2026, 2027, 2028, 2029, 2030, 2031, 2032];
+  const labels=[], dataAnual=[], pillsData=[];
+
+  anos.forEach(ano => {
+    const fator = fatores[ano];
+    // Economia plena do ano: 2026 tem só 7 meses de Primavera; 2027+ usa Fim Primavera × 12m
+    const liqPlena = ano === 2026
+      ? (sp1 - totalES) * 7
+      : (sp2 - totalES) * 12;
+    const liqAjust = liqPlena * fator;
+    labels.push(String(ano));
+    dataAnual.push(liqAjust);
+    pillsData.push({ ano, fator, val: liqAjust });
+  });
+
+  // Total acumulado
+  const totalAcum = dataAnual.reduce((a, b) => a + b, 0);
+  const elTot = document.getElementById('reforma-total');
+  elTot.textContent = fmtBRLshort(totalAcum);
+  elTot.style.color = totalAcum >= 0 ? '#16a34a' : '#dc2626';
+  document.querySelector('#reforma-total').closest('div[style]').style.background =
+    totalAcum >= 0 ? '#f0fdf4' : '#fef2f2';
+  document.querySelector('#reforma-total').closest('div[style]').style.borderColor =
+    totalAcum >= 0 ? '#bbf7d0' : '#fecaca';
+
+  // Pills
+  const grid = document.getElementById('anual-grid');
+  grid.innerHTML = '';
+  pillsData.forEach(({ ano, fator, val }) => {
+    const pct100 = Math.round(fator*100);
+    const bg = fator === 1   ? '#f0fdf4'
+              : fator  > 0   ? '#fef9c3'
+              :                '#fef2f2';
+    const bc = fator === 1   ? '#bbf7d0'
+              : fator  > 0   ? '#fde68a'
+              :                '#fecaca';
+    const vc = fator === 1   ? '#16a34a'
+              : fator  > 0   ? '#92400e'
+              :                '#dc2626';
+    const d = document.createElement('div');
+    d.className = 'ano-pill';
+    d.style.background = bg; d.style.borderColor = bc;
+    const incLabel = fator === 0 ? 'Extinto' : `Incentivo ${pct100}%`;
+    d.innerHTML = `<div class="apano">${ano}</div>
+      <div class="apval" style="color:${vc}">${fmtBRLshort(val)}</div>
+      <div class="apinc">${incLabel}</div>`;
+    grid.appendChild(d);
+  });
+
+  const ds = [{
+    label: 'Economia Líquida Anual',
+    data: dataAnual,
+    backgroundColor: dataAnual.map(v => v>0 ? 'rgba(22,163,74,.75)' : v<0 ? 'rgba(220,38,38,.75)' : 'rgba(148,163,184,.6)'),
+    borderColor:     dataAnual.map(v => v>0 ? '#16a34a' : v<0 ? '#dc2626' : '#94a3b8'),
+    borderWidth: 1.5, borderRadius: 6,
+  }];
+
+  if (charts.ref) {
+    charts.ref.data.labels=labels;
+    charts.ref.data.datasets[0].data=dataAnual;
+    charts.ref.data.datasets[0].backgroundColor=ds[0].backgroundColor;
+    charts.ref.data.datasets[0].borderColor=ds[0].borderColor;
+    charts.ref.update('none'); return;
+  }
+  charts.ref = new Chart(document.getElementById('chart-reforma').getContext('2d'), {
+    type:'bar', data:{labels,datasets:ds},
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>' Economia: '+fmtBRL(c.raw)}}
+      },
+      scales:{
+        y:{ticks:{callback:v=>'R$'+(v/1000).toFixed(0)+'k',font:{size:11}},grid:{color:'#f1f5f9'}},
+        x:{grid:{display:false},ticks:{font:{size:12,weight:'700'}}}
+      }
+    }
+  });
+}
+
+function fmtBRLshort(v) {
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '−' : '';
+  if (abs >= 1e6) return sign + 'R$' + (abs/1e6).toFixed(1).replace('.',',') + 'M';
+  if (abs >= 1e3) return sign + 'R$' + (abs/1e3).toFixed(0) + 'k';
+  return sign + 'R$' + Math.round(abs);
+}
+
+recalc('markup');
+</script>
+</body>
+</html>
