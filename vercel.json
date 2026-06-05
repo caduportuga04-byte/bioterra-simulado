@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/bem_es.html" }
+    { "source": "/", "destination": "/viabilidade_es.html" }
   ]
 }
